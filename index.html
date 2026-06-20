@@ -212,8 +212,7 @@
         
         <div class="box">
             <div class="section-title"><span>📂</span> 1. 이미지 파일 업로드</div>
-            <input type="file" id="imageInput" class="file-input" accept="image/jpeg, image/png, image/webp, image/gif">
-            <p style="font-size: 12px; color: #94a3b8; margin-top: 8px;">* 참고: 움직이는 GIF(움짤)를 자를 경우 정지된 이미지로 저장됩니다.</p>
+            <input type="file" id="imageInput" class="file-input" accept="image/jpeg, image/png, image/webp">
         </div>
 
         <div class="box">
@@ -246,7 +245,6 @@
                         <option value="png">.png</option>
                         <option value="jpeg">.jpg</option>
                         <option value="webp">.webp</option>
-                        <option value="gif">.gif</option>
                     </select>
                 </div>
                 <button onclick="cropAndDownload()" class="action-btn">
@@ -301,20 +299,20 @@
             if (!cropper) return alert('이미지를 먼저 업로드하세요.');
             
             let fileName = document.getElementById('fileNameInput').value.trim();
-            const format = document.getElementById('fileFormat').value; // 'png', 'jpeg', 'webp', 'gif'
+            const format = document.getElementById('fileFormat').value; // 'png', 'jpeg', 'webp'
             let ext = '.' + format;
             
             if (format === 'jpeg') ext = '.jpg';
 
             if (!fileName) fileName = 'cropped_image'; 
             
-            // 사용자가 확장자를 미리 적었을 경우 중복 방지를 위해 깔끔하게 제거
-            fileName = fileName.replace(/\.(png|jpg|jpeg|webp|gif)$/i, '');
+            // 사용자가 확장자를 미리 적었을 경우 중복 방지 (gif 제외됨)
+            fileName = fileName.replace(/\.(png|jpg|jpeg|webp)$/i, '');
             
             // 최종 파일명 완성
             fileName += ext;
 
-            // JPG 형식으로 저장할 때만 투명 배경을 강제로 흰색으로 채움 (PNG, WEBP, GIF는 투명도 유지)
+            // JPG 형식으로 저장할 때만 투명 배경을 강제로 흰색으로 채움 (PNG, WEBP는 투명도 유지)
             const canvasOptions = format === 'jpeg' ? { fillColor: '#ffffff' } : {};
             const canvas = cropper.getCroppedCanvas(canvasOptions);
             
