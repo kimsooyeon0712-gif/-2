@@ -62,7 +62,6 @@
             margin-bottom: 24px; 
         }
 
-        /* 파일 입력 영역 */
         .file-input { 
             width: 100%;
             font-size: 14px;
@@ -86,7 +85,6 @@
         }
         .file-input::file-selector-button:hover { background-color: #cbd5e1; }
 
-        /* 비율 선택 버튼 그룹 */
         .ratio-group {
             display: flex;
             gap: 10px;
@@ -113,10 +111,7 @@
             box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
         }
 
-        /* 이미지 에디터 컨테이너 */
-        #workspace {
-            display: none; /* 처음에 숨김 */
-        }
+        #workspace { display: none; }
         .img-container {
             width: 100%;
             max-height: 500px;
@@ -128,7 +123,6 @@
         }
         img { max-width: 100%; display: block; }
 
-        /* 파일명 입력 및 다운로드 옵션 */
         #downloadOptions {
             margin-top: 24px;
             background: #ffffff;
@@ -164,7 +158,22 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
         }
-        .filename-ext { font-size: 14px; font-weight: 600; color: var(--text-sub); }
+        
+        /* 확장자 선택 드롭다운 스타일 */
+        .ext-select {
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            background-color: #f8fafc;
+            outline: none;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+        .ext-select:focus { border-color: var(--primary); }
 
         button.action-btn { 
             width: 100%; 
@@ -204,7 +213,7 @@
         
         <div class="box">
             <div class="section-title"><span>📂</span> 1. 이미지 파일 업로드</div>
-            <input type="file" id="imageInput" class="file-input" accept="image/jpeg, image/png">
+            <input type="file" id="imageInput" class="file-input" accept="image/jpeg, image/png, image/webp">
         </div>
 
         <div class="box">
@@ -232,7 +241,11 @@
                 <div class="filename-wrapper">
                     <label for="fileNameInput">저장할 파일명 :</label>
                     <input type="text" id="fileNameInput" class="filename-input" placeholder="자른_이미지" value="cropped_image">
-                    <span class="filename-ext">.png</span>
+                    
+                    <select id="fileFormat" class="ext-select">
+                        <option value="png">.png</option>
+                        <option value="jpeg">.jpg</option>
+                    </select>
                 </div>
                 <button onclick="cropAndDownload()" class="action-btn">
                     현재 영역으로 이미지 다운로드
@@ -249,64 +262,65 @@
         const workspace = document.getElementById('workspace');
         const downloadOptions = document.getElementById('downloadOptions');
 
-        // 이미지 업로드 시 실행
         input.addEventListener('change', (e) => {
             const files = e.target.files;
             if (files && files.length > 0) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    // 이미지 소스 교체
                     sourceImage.src = event.target.result;
                     
-                    // 빈 상태 메시지 숨기고 워크스페이스 표시
                     emptyMsg.style.display = 'none';
                     workspace.style.display = 'block';
                     downloadOptions.style.display = 'block';
 
-                    // 기존 크로퍼가 있다면 파괴 후 재생성
                     if (cropper) cropper.destroy();
                     
                     cropper = new Cropper(sourceImage, {
-                        viewMode: 1, // 크롭 박스가 캔버스 밖으로 나가지 않도록 설정
-                        autoCropArea: 0.8, // 초기 크롭 박스 크기 (80%)
+                        viewMode: 1, 
+                        autoCropArea: 0.8, 
                         responsive: true
                     });
 
-                    // 새 이미지를 올리면 '자유 비율' 버튼으로 초기화
                     setRatio(NaN, document.getElementById('btn-free'));
                 };
                 reader.readAsDataURL(files[0]);
             }
         });
 
-        // 비율 버튼 클릭 시 실행
         function setRatio(ratio, clickedBtn) {
-            if (cropper) {
-                cropper.setAspectRatio(ratio);
-            }
+            if (cropper) cropper.setAspectRatio(ratio);
             
-            // 모든 버튼의 색상을 초기화하고, 클릭한 버튼만 색상 활성화
             const btns = document.querySelectorAll('.ratio-btn');
             btns.forEach(btn => btn.classList.remove('active'));
-            if (clickedBtn) {
-                clickedBtn.classList.add('active');
-            }
+            if (clickedBtn) clickedBtn.classList.add('active');
         }
 
-        // 다운로드 버튼 클릭 시 실행
         function cropAndDownload() {
             if (!cropper) return alert('이미지를 먼저 업로드하세요.');
             
-            // 사용자가 입력한 파일명 가져오기
             let fileName = document.getElementById('fileNameInput').value.trim();
-            if (!fileName) fileName = 'cropped_image'; 
-            if (!fileName.toLowerCase().endsWith('.png')) fileName += '.png'; 
+            const format = document.getElementById('fileFormat').value; // 'png' or 'jpeg'
+            const ext = format === 'jpeg' ? '.jpg' : '.png';
 
-            // 잘라낸 영역을 캔버스로 가져오기
-            const canvas = cropper.getCroppedCanvas();
+            if (!fileName) fileName = 'cropped_image'; 
+            
+            // 사용자가 확장자를 직접 쳤을 경우 중복 방지를 위해 제거
+            if (fileName.toLowerCase().endsWith('.png')) fileName = fileName.slice(0, -4);
+            if (fileName.toLowerCase().endsWith('.jpg')) fileName = fileName.slice(0, -4);
+            if (fileName.toLowerCase().endsWith('.jpeg')) fileName = fileName.slice(0, -5);
+            
+            // 최종 파일명
+            fileName += ext;
+
+            // 캔버스 생성 옵션: JPG일 때 배경을 강제로 흰색으로 채움 (투명 영역 까맣게 변하는 것 방지)
+            const canvasOptions = format === 'jpeg' ? { fillColor: '#ffffff' } : {};
+            const canvas = cropper.getCroppedCanvas(canvasOptions);
+            
             const link = document.createElement('a');
-            link.download = fileName; // 지정한 파일명 적용
-            link.href = canvas.toDataURL('image/png'); // PNG 고화질로 출력
+            link.download = fileName; 
+            
+            // 이미지 포맷(image/png 또는 image/jpeg) 적용, JPG일 경우 화질 90%로 설정
+            link.href = canvas.toDataURL(`image/${format}`, 0.9); 
             link.click();
         }
     </script>
