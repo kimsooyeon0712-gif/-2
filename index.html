@@ -3,62 +3,310 @@
 <head>
     <meta charset="UTF-8">
     <title>이미지 자르기</title>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/variable/pretendardvariable.css" />
+    
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; text-align: center; }
-        .img-container { width: 100%; max-height: 500px; margin: 20px 0; background-color: #f8f9fa; display: flex; justify-content: center; }
-        img { max-width: 100%; }
-        button { padding: 10px 15px; margin: 5px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        button.ratio { background: #6c757d; }
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --bg-color: #f4f6f8;
+            --box-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body { 
+            font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif; 
+            padding: 40px 20px; 
+            max-width: 850px; 
+            margin: 0 auto; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+        }
+
+        .container {
+            background: var(--box-bg);
+            padding: 40px;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+        }
+
+        h2 { 
+            text-align: center; 
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 30px; 
+            letter-spacing: -0.5px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .box { 
+            background: #f8fafc; 
+            border: 1px solid var(--border-color); 
+            padding: 24px; 
+            border-radius: 16px; 
+            margin-bottom: 24px; 
+        }
+
+        /* 파일 입력 영역 */
+        .file-input { 
+            width: 100%;
+            font-size: 14px;
+            color: var(--text-main);
+            background: #ffffff;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-sizing: border-box;
+        }
+        .file-input::file-selector-button {
+            background-color: #e2e8f0;
+            color: #475569;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-right: 15px;
+        }
+        .file-input::file-selector-button:hover { background-color: #cbd5e1; }
+
+        /* 비율 선택 버튼 그룹 */
+        .ratio-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .ratio-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px;
+            background: #ffffff;
+            color: var(--text-sub);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .ratio-btn:hover:not(.active) { background: #f1f5f9; }
+        .ratio-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+        }
+
+        /* 이미지 에디터 컨테이너 */
+        #workspace {
+            display: none; /* 처음에 숨김 */
+        }
+        .img-container {
+            width: 100%;
+            max-height: 500px;
+            background-color: #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+        img { max-width: 100%; display: block; }
+
+        /* 파일명 입력 및 다운로드 옵션 */
+        #downloadOptions {
+            margin-top: 24px;
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            display: none;
+        }
+        .filename-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .filename-wrapper label {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+        .filename-input {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+            font-family: inherit;
+        }
+        .filename-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+        }
+        .filename-ext { font-size: 14px; font-weight: 600; color: var(--text-sub); }
+
+        button.action-btn { 
+            width: 100%; 
+            padding: 16px; 
+            background-color: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 700; 
+            letter-spacing: -0.3px;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+            transition: all 0.2s; 
+        }
+        button.action-btn:hover { 
+            background-color: var(--primary-hover); 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(99, 102, 241, 0.35);
+        }
+
+        .empty-msg { 
+            width: 100%; 
+            text-align: center; 
+            color: #94a3b8; 
+            padding: 60px 0; 
+            font-size: 15px; 
+            background: #ffffff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body>
-    <h2>이미지 자르기 (Cropping)</h2>
-    <input type="file" id="imageInput" accept="image/jpeg, image/png">
-    
-    <div class="img-container">
-        <img id="image" style="display: none;">
-    </div>
+    <div class="container">
+        <h2>이미지 자르기</h2>
+        
+        <div class="box">
+            <div class="section-title"><span>📂</span> 1. 이미지 파일 업로드</div>
+            <input type="file" id="imageInput" class="file-input" accept="image/jpeg, image/png">
+        </div>
 
-    <div>
-        <button class="ratio" onclick="setRatio(1)">1:1 비율</button>
-        <button class="ratio" onclick="setRatio(16/9)">16:9 비율</button>
-        <button class="ratio" onclick="setRatio(4/3)">4:3 비율</button>
-        <button class="ratio" onclick="setRatio(NaN)">자유 비율</button>
+        <div class="box">
+            <div class="section-title"><span>📐</span> 2. 자르기 비율 선택</div>
+            <div class="ratio-group">
+                <button class="ratio-btn active" id="btn-free" onclick="setRatio(NaN, this)">자유 비율</button>
+                <button class="ratio-btn" onclick="setRatio(1, this)">1:1 (정방형)</button>
+                <button class="ratio-btn" onclick="setRatio(16/9, this)">16:9 (와이드)</button>
+                <button class="ratio-btn" onclick="setRatio(4/3, this)">4:3 (일반형)</button>
+            </div>
+        </div>
+
+        <div class="box">
+            <div class="section-title"><span>✂️</span> 3. 영역 지정 및 저장</div>
+            
+            <div id="emptyMsg" class="empty-msg">이미지 파일을 업로드하면 자르기 영역이 나타납니다.</div>
+            
+            <div id="workspace">
+                <div class="img-container">
+                    <img id="sourceImage" src="" alt="업로드된 이미지">
+                </div>
+            </div>
+
+            <div id="downloadOptions">
+                <div class="filename-wrapper">
+                    <label for="fileNameInput">저장할 파일명 :</label>
+                    <input type="text" id="fileNameInput" class="filename-input" placeholder="자른_이미지" value="cropped_image">
+                    <span class="filename-ext">.png</span>
+                </div>
+                <button onclick="cropAndDownload()" class="action-btn">
+                    현재 영역으로 이미지 다운로드
+                </button>
+            </div>
+        </div>
     </div>
-    <br>
-    <button onclick="cropAndDownload()">자른 이미지 다운로드</button>
 
     <script>
-        let cropper;
-        const image = document.getElementById('image');
+        let cropper = null;
+        const sourceImage = document.getElementById('sourceImage');
         const input = document.getElementById('imageInput');
+        const emptyMsg = document.getElementById('emptyMsg');
+        const workspace = document.getElementById('workspace');
+        const downloadOptions = document.getElementById('downloadOptions');
 
+        // 이미지 업로드 시 실행
         input.addEventListener('change', (e) => {
             const files = e.target.files;
             if (files && files.length > 0) {
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    image.src = event.target.result;
-                    image.style.display = 'block';
+                    // 이미지 소스 교체
+                    sourceImage.src = event.target.result;
+                    
+                    // 빈 상태 메시지 숨기고 워크스페이스 표시
+                    emptyMsg.style.display = 'none';
+                    workspace.style.display = 'block';
+                    downloadOptions.style.display = 'block';
+
+                    // 기존 크로퍼가 있다면 파괴 후 재생성
                     if (cropper) cropper.destroy();
-                    cropper = new Cropper(image, { viewMode: 1 });
+                    
+                    cropper = new Cropper(sourceImage, {
+                        viewMode: 1, // 크롭 박스가 캔버스 밖으로 나가지 않도록 설정
+                        autoCropArea: 0.8, // 초기 크롭 박스 크기 (80%)
+                        responsive: true
+                    });
+
+                    // 새 이미지를 올리면 '자유 비율' 버튼으로 초기화
+                    setRatio(NaN, document.getElementById('btn-free'));
                 };
                 reader.readAsDataURL(files[0]);
             }
         });
 
-        function setRatio(ratio) {
-            if (cropper) cropper.setAspectRatio(ratio);
+        // 비율 버튼 클릭 시 실행
+        function setRatio(ratio, clickedBtn) {
+            if (cropper) {
+                cropper.setAspectRatio(ratio);
+            }
+            
+            // 모든 버튼의 색상을 초기화하고, 클릭한 버튼만 색상 활성화
+            const btns = document.querySelectorAll('.ratio-btn');
+            btns.forEach(btn => btn.classList.remove('active'));
+            if (clickedBtn) {
+                clickedBtn.classList.add('active');
+            }
         }
 
+        // 다운로드 버튼 클릭 시 실행
         function cropAndDownload() {
             if (!cropper) return alert('이미지를 먼저 업로드하세요.');
+            
+            // 사용자가 입력한 파일명 가져오기
+            let fileName = document.getElementById('fileNameInput').value.trim();
+            if (!fileName) fileName = 'cropped_image'; 
+            if (!fileName.toLowerCase().endsWith('.png')) fileName += '.png'; 
+
+            // 잘라낸 영역을 캔버스로 가져오기
             const canvas = cropper.getCroppedCanvas();
             const link = document.createElement('a');
-            link.download = 'cropped_image.png';
-            link.href = canvas.toDataURL('image/png');
+            link.download = fileName; // 지정한 파일명 적용
+            link.href = canvas.toDataURL('image/png'); // PNG 고화질로 출력
             link.click();
         }
     </script>
