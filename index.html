@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>이미지 자르기</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; text-align: center; }
+        .img-container { width: 100%; max-height: 500px; margin: 20px 0; background-color: #f8f9fa; display: flex; justify-content: center; }
+        img { max-width: 100%; }
+        button { padding: 10px 15px; margin: 5px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button.ratio { background: #6c757d; }
+    </style>
+</head>
+<body>
+    <h2>이미지 자르기 (Cropping)</h2>
+    <input type="file" id="imageInput" accept="image/jpeg, image/png">
+    
+    <div class="img-container">
+        <img id="image" style="display: none;">
+    </div>
+
+    <div>
+        <button class="ratio" onclick="setRatio(1)">1:1 비율</button>
+        <button class="ratio" onclick="setRatio(16/9)">16:9 비율</button>
+        <button class="ratio" onclick="setRatio(4/3)">4:3 비율</button>
+        <button class="ratio" onclick="setRatio(NaN)">자유 비율</button>
+    </div>
+    <br>
+    <button onclick="cropAndDownload()">자른 이미지 다운로드</button>
+
+    <script>
+        let cropper;
+        const image = document.getElementById('image');
+        const input = document.getElementById('imageInput');
+
+        input.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    image.src = event.target.result;
+                    image.style.display = 'block';
+                    if (cropper) cropper.destroy();
+                    cropper = new Cropper(image, { viewMode: 1 });
+                };
+                reader.readAsDataURL(files[0]);
+            }
+        });
+
+        function setRatio(ratio) {
+            if (cropper) cropper.setAspectRatio(ratio);
+        }
+
+        function cropAndDownload() {
+            if (!cropper) return alert('이미지를 먼저 업로드하세요.');
+            const canvas = cropper.getCroppedCanvas();
+            const link = document.createElement('a');
+            link.download = 'cropped_image.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
